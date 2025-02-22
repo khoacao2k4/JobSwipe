@@ -36,3 +36,20 @@ class Application:
             'status': self.status,
             'created_at': self.created_at
         }
+
+class JobPosting:
+    def __init__(self, title: str, description: str, recruiter_id: str):
+        self.id = str(uuid.uuid4())
+        self.title = title
+        self.description = description
+        self.recruiter_id = recruiter_id
+        self.created_at = datetime.now()
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'recruiter_id': self.recruiter_id,
+            'created_at': self.created_at
+        }

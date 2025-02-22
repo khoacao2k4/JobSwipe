@@ -4,7 +4,7 @@ from pathlib import Path
 import constants
 import streamlit as st
 import pymongo
-from schema import User, Application
+from schema import User, Application, JobPosting
 
 def get_database():
     client = pymongo.MongoClient(constants.MONGODB_URI, server_api=pymongo.server_api.ServerApi('1'))
@@ -162,6 +162,12 @@ def profile_setup_page():
             st.success("Profile saved successfully!")
             st.rerun()
 
+def recruiter_job_post():
+    pass
+
+def recruiter_applications():
+    pass
+
 def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
@@ -171,10 +177,17 @@ def main():
     else:
         if not st.session_state["profile_complete"]:
             profile_setup_page()
-        if st.session_state['user']['role'] == 'applicant':
-            job_page()
-        else:  # recruiter
-            pass
+        else:
+            if st.session_state['user']['role'] == 'applicant':
+                job_page()
+            else:  # recruiter
+                tab1, tab2 = st.tabs(["Add a New Job Posting 📄", "Review Applications 🔍"])
+                
+                with tab1:
+                    recruiter_job_post()
+                
+                with tab2:
+                    recruiter_applications()
 
 if __name__ == "__main__":
     main()
