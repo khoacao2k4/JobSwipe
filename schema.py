@@ -8,6 +8,7 @@ class User:
         self.password = password
         self.role = role  # recruiter/applicant
         self.created_at = datetime.now()
+        self.profile = None
 
     def to_dict(self):
         return {
@@ -15,5 +16,6 @@ class User:
             'email': self.email,
             'password': self.password,
             'role': self.role,
-            'created_at': self.created_at
+            'created_at': self.created_at,
+            'profile': self.profile
         }
