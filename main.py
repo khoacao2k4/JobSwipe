@@ -9,8 +9,7 @@ from schema import User, Application, JobPosting
 from streamlit_pdf_viewer import pdf_viewer
 
 def get_database():
-    MONGODB_URI="mongodb+srv://kqcao:p8Ux3S7P8ZIqR8wE@talentswipe.mrsyw.mongodb.net/?retryWrites=true&w=majority&appName=TalentSwipe"
-    client = pymongo.MongoClient(MONGODB_URI, server_api=pymongo.server_api.ServerApi('1'))
+    client = pymongo.MongoClient(constants.MONGODB_URI, server_api=pymongo.server_api.ServerApi('1'))
     return client['job_matching_db']
 
 #init db
