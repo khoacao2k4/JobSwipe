@@ -6,9 +6,11 @@ import constants
 import streamlit as st
 import pymongo
 from schema import User, Application, JobPosting
+from streamlit_pdf_viewer import pdf_viewer
 
 def get_database():
-    client = pymongo.MongoClient(constants.MONGODB_URI, server_api=pymongo.server_api.ServerApi('1'))
+    MONGODB_URI="mongodb+srv://kqcao:p8Ux3S7P8ZIqR8wE@talentswipe.mrsyw.mongodb.net/?retryWrites=true&w=majority&appName=TalentSwipe"
+    client = pymongo.MongoClient(MONGODB_URI, server_api=pymongo.server_api.ServerApi('1'))
     return client['job_matching_db']
 
 #init db
@@ -354,9 +356,84 @@ def application_status_page():
             )
 
 def recruiter_applications():
-    pass
+    # Initialize session state variables
+    if 'recommended_jobs' not in st.session_state:
+        st.session_state['recommended_jobs'] = get_recommended_jobs(st.session_state['user'])
+        st.session_state['current_job_index'] = 0
+
+    if st.session_state['current_job_index'] >= len(st.session_state['recommended_jobs']):
+        st.write("No more applicants to show!")
+        if st.button("Start Over"):
+            st.session_state['recommended_jobs'] = get_recommended_jobs(st.session_state['user'])
+            st.session_state['current_job_index'] = 0
+            st.rerun()
+        return
+
+    current_job = st.session_state['recommended_jobs'][st.session_state['current_job_index']]
+
+    # Custom CSS for styling the boxes
+    st.markdown(
+        """
+        <style>
+            .details-card, .resume-card {
+                border: 2px solid #ddd; 
+                border-radius: 12px; 
+                background-color: white; 
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                margin: 20px;
+                color: black;
+            }
+            .matching-score {
+                font-size: 20px;
+                font-weight: bold;
+                color: green;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Pass & Apply Buttons
+    col3, _, col4 = st.columns([2, 10, 2])
+
+    with col3:
+        if st.button("👎 Reject"):
+            st.session_state['current_job_index'] += 1
+            st.rerun()
+
+    with col4:
+        if st.button("👍 Accept"):
+            st.success(f"Application submitted for {current_job['title']}!")
+            st.session_state['current_job_index'] += 1
+            st.rerun()
+
+    # Create a two-column layout
+    col1, col2 = st.columns([2, 3])  # Left: Applicant details, Right: Resume PDF
+
+    with col1:
+        st.header("👤 Applicant Information")
+        st.write(f"**Name:** {current_job.get('applicant_name', 'Unknown')}")
+        st.write(f"**Education:** {current_job.get('education', 'Not specified')}")
+        st.write(f"**Experience:** {current_job.get('experience_years', 'N/A')} years")
+        st.write(f"**Skills:** {current_job.get('job_qualities', 'Not specified')}")
+        st.write(f"**Matching Score:** {current_job.get('matching_score', 'N/A')}%")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col2:
+        # st.header("📄 Resume Preview")
+        # Check if there's a resume file link, otherwise display a placeholder
+        resume_path = current_job.get("resume_path", None)
+        resume_path = r"C:\Users\gaume\Desktop\MadData\Resume - Toan Vo.pdf"
+        if resume_path:
+            pdf_viewer(resume_path, width="70%")
+        else:
+            st.warning("No resume available.")
 
 def main():
+    st.set_page_config(layout="wide")
+    if 'show_details' not in st.session_state:
+        st.session_state['show_details'] = False
     if 'show_modal' not in st.session_state:
         st.session_state['show_modal'] = False
     if 'logged_in' not in st.session_state:
