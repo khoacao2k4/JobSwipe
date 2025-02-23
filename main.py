@@ -161,6 +161,7 @@ def profile_setup_page():
                   
             st.session_state['profile_complete'] = True
             st.success("Profile saved successfully!")
+            time.sleep(2)
             st.rerun()
 
 def recruiter_job_post():
@@ -229,6 +230,70 @@ def recruiter_job_post():
             time.sleep(2)
             st.rerun()
 
+def application_status_page():
+    st.title("Application Status 📝")
+    st.write("Check the status of your applications here.")
+    # Perform the aggregation pipeline to join jobs_collection
+    applications = applications_collection.aggregate([
+        {
+            "$match": {"applicant_id": st.session_state['user']['id']}
+        },
+        {
+            "$lookup": {
+                "from": "jobs",  # The collection to join with
+                "localField": "job_id",     # Field in applications_collection
+                "foreignField": "id",       # Matching field in jobs_collection
+                "as": "job_details"         # Output array containing job details
+            }
+        }
+    ])
+
+    for application in applications:
+        job_details = application.get("job_details", [])
+        
+        # Safely extract the first job if it exists, otherwise skip
+        if not job_details:
+            continue
+        job = job_details[0]
+        job_title = job.get("title", "Unknown Job")
+        job_description = job.get("description", "No description available")
+        job_posted_date = job.get("created_at", None)
+
+        formatted_job_date = (
+            job_posted_date.strftime("%m/%d/%Y %I:%M %p")
+            if job_posted_date else "Unknown Date"
+        )
+
+        application_date = application.get("created_at", None)
+        formatted_app_date = (
+            application_date.strftime("%m/%d/%Y %I:%M %p")
+            if application_date else "Unknown Date"
+        )
+
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="
+                    border: 1px solid #ddd;
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin: 10px 0;
+                    box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+                    background-color: #f9f9f9;
+                    color: #333;
+                ">
+                    <h3 style="color: #333;">{job_title}</h3>
+                    <p><b>Job Description:</b> {job_description[:150]}...</p>
+                    <p><b>Job Posted:</b> {formatted_job_date}</p>
+                    <p><b>Status:</b> <span style="color: {'green' if application['status'] == 'Accepted' else 'red' if application['status'] == 'Rejected' else 'blue'};">
+                        {application['status']}
+                    </span></p>
+                    <p><b>Date Applied:</b> {formatted_app_date}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
 def recruiter_applications():
     pass
 
@@ -243,7 +308,11 @@ def main():
             profile_setup_page()
         else:
             if st.session_state['user']['role'] == 'applicant':
-                job_page()
+                tab1, tab2 = st.tabs(["Application Status 📝", "Job Swipe 👆"])
+                with tab1:
+                    application_status_page()
+                with tab2:
+                    job_page()
             else:  # recruiter
                 tab1, tab2 = st.tabs(["Add a New Job Posting 📄", "Review Applications 🔍"])
                 
