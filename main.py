@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 import os
 from pathlib import Path
 import constants
@@ -163,7 +164,70 @@ def profile_setup_page():
             st.rerun()
 
 def recruiter_job_post():
-    pass
+    st.title("Add a New Job Posting 📄")
+    
+    # Initialize questions list in session state if it doesn't exist
+    if 'job_questions' not in st.session_state:
+        st.session_state.job_questions = []
+        
+    with st.form("job_posting_form"):
+        st.subheader("Basic Information")
+        title = st.text_input("Job Title")
+        description = st.text_area("Job Description")
+        job_qualities = st.text_input("What qualities are you looking for in applicants?")
+
+
+        st.subheader("Screening Questions")
+        st.write("Add questions you'd like to ask applicants")
+        # Display each question field
+        for i, question in enumerate(st.session_state.job_questions):
+            st.text_input(
+                f"Question {i+1}",
+                value=question,
+                key=f"question_{i}"
+            )
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            add_question = st.form_submit_button("Add Question")
+        with col2:
+            remove_question = st.form_submit_button("Remove Last Question")    
+
+        if add_question:
+            st.session_state.job_questions.append("")
+            st.rerun()
+            
+        if remove_question and len(st.session_state.job_questions) > 0:
+            st.session_state.job_questions.pop()
+            st.rerun()
+
+        submit_form = st.form_submit_button("Submit Job Posting")
+            
+        if submit_form:
+            # Get updated questions from form
+            updated_questions = []
+            for i in range(len(st.session_state.job_questions)):
+                question = st.session_state[f"question_{i}"]
+                if question.strip():
+                    updated_questions.append(question)
+            
+            # Create and save job posting
+            job = JobPosting(
+                title=title,
+                description=description,
+                job_qualities=job_qualities,
+                recruiter_id=st.session_state['user']['id'],
+                questions=updated_questions
+            )
+            jobs_collection.insert_one(job.to_dict())
+            
+            # Reset questions
+            st.session_state.job_questions = [""]
+            
+            st.success("Job posted successfully!")
+            time.sleep(2)
+            st.rerun()
 
 def recruiter_applications():
     pass

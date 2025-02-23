@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict, List
 import uuid
 
 class User:
@@ -38,11 +39,13 @@ class Application:
         }
 
 class JobPosting:
-    def __init__(self, title: str, description: str, recruiter_id: str):
+    def __init__(self, title: str, description: str, recruiter_id: str, job_qualities: str, questions: List[Dict[str, str]]):
         self.id = str(uuid.uuid4())
         self.title = title
         self.description = description
         self.recruiter_id = recruiter_id
+        self.job_qualities = job_qualities
+        self.questions = questions
         self.created_at = datetime.now()
 
     def to_dict(self):
@@ -51,5 +54,7 @@ class JobPosting:
             'title': self.title,
             'description': self.description,
             'recruiter_id': self.recruiter_id,
+            'job_qualities': self.job_qualities,
+            'questions': self.questions,
             'created_at': self.created_at
         }
