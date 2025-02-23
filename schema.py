@@ -22,10 +22,11 @@ class User:
         }
     
 class Application:
-    def __init__(self, job_id: str, applicant_id: str, status: str = 'pending'):
+    def __init__(self, job_id: str, applicant_id: str, answers: list[str], status: str = 'pending'):
         self.id = str(uuid.uuid4())
         self.job_id = job_id
         self.applicant_id = applicant_id
+        self.answers = answers
         self.status = status  # 'pending', 'accepted', 'rejected'
         self.created_at = datetime.now()
 
@@ -34,6 +35,7 @@ class Application:
             'id': self.id,
             'job_id': self.job_id,
             'applicant_id': self.applicant_id,
+            'answers': self.answers,
             'status': self.status,
             'created_at': self.created_at
         }

@@ -65,22 +65,31 @@ def get_recommended_jobs(user):
     #return placeholder jobs
     return [
         {
-            "title": "Software Engineer",
-            "description": "We are looking for a talented software engineer to join our team."
+            'id': "Vagina",
+            'title': "Software Engineer",
+            'description': "Data Scientist Affinity Solutions Marketing Cloud seeks smart, curious, technically savvy candidates join cutting-edge data science team. hire best brightest give opportunity work industry-leading technologies. The data sciences team AFS/Marketing Cloud build models, machine learning algorithms power ad-tech/mar-tech products scale, develop methodology tools precisely effectively measure market campaign effects, research in-house public data sources consumer spend behavior insights. role, opportunity come new ideas solutions lead improvement ability target right audience, derive insights provide better measurement methodology marketing campaigns. You'll access core data asset machine learning infrastructure power ideas. Duties Responsibilities Support clients model building needs, including maintaining improving current modeling/scoring methodology processes, Provide innovative solutions customized modeling/scoring/targeting appropriate ML/statistical tools, Provide analytical/statistical support marketing test design, projection, campaign measurement, market insights clients stakeholders. Mine large consumer datasets cloud environment support hoc business statistical analysis, Develop Improve automation capabilities enable customized delivery analytical products clients, Communicate methodologies results management, clients none technical stakeholders. Basic Qualifications Advanced degree Statistics/Mathematics/Computer Science/Economics fields requires advanced training data analytics. Being able apply basic statistical/ML concepts reasoning address solve business problems targeting, test design, KPI projection performance measurement. Entrepreneurial, highly self-motivated, collaborative, keen attention detail, willingness capable learn quickly, ability effectively prioritize execute tasks high pressure environment. Being flexible accept different task assignments able work tight time schedule. Excellent command one programming languages; preferably Python, SAS Familiar one database technologies PostgreSQL, MySQL, write basic SQL queries Great communication skills (verbal, written presentation) Preferred Qualifications Experience exposure large consumer and/or demographic data sets. Familiarity data manipulation cleaning routines techniques.",
+            'recruiter_id': 1,
+            'job_qualities': "Pussy",
+            'questions': ["Mei ci dou xiang zhuang", "Do you shave your pussy"],
+            'created_at': datetime.now()
         },
         {
+            'id': "Dildo",
             "title": "Data Scientist",
-            "description": "We are looking for a talented data scientist to join our team."
+            "description": "We are looking for a talented data scientist to join our team.",
+            'recruiter_id': 2,
+            'job_qualities': "Pussy",
+            'questions': [],
+            'created_at': datetime.now()
         }
     ]
 
 def job_page():
     st.title("Find Your Next Job")
-    
     if 'recommended_jobs' not in st.session_state:
         st.session_state['recommended_jobs'] = get_recommended_jobs(st.session_state['user'])
         st.session_state['current_job_index'] = 0
-    
+
     if st.session_state['current_job_index'] >= len(st.session_state['recommended_jobs']):
         st.write("No more jobs to show!")
         if st.button("Start Over"):
@@ -88,26 +97,76 @@ def job_page():
             st.session_state['current_job_index'] = 0
             st.rerun()
         return
-    
+
     current_job = st.session_state['recommended_jobs'][st.session_state['current_job_index']]
-    
-    st.write(f"## {current_job['title']}")
-    st.write(current_job['description'])
-    
-    col1, col2 = st.columns(2)
-    
+
+    # Custom CSS for a card-like interface
+    st.markdown(
+        f"""
+        <div style="
+            border: 2px solid #ddd; 
+            border-radius: 12px; 
+            color: black;
+            padding: 20px; 
+            margin: 20px 0px; 
+            background-color: white; 
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        ">
+            <h2>{current_job['title']}</h2>
+            <p>{current_job['description']}</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col1, _, col2 = st.columns([2, 10, 2])
+
     with col1:
         if st.button("👎 Pass"):
             st.session_state['current_job_index'] += 1
+            st.session_state['show_modal'] = False
             st.rerun()
-    
+
     with col2:
         if st.button("👍 Apply"):
-            application = Application(current_job['id'], st.session_state['user']['id'])
-            applications_collection.insert_one(application.to_dict())
-            st.session_state['current_job_index'] += 1
-            st.success("Application submitted!")
-            st.experimental_rerun()
+            if len(current_job['questions']) == 0:
+                application = Application(current_job['id'], st.session_state['user']['id'], [])
+                applications_collection.insert_one(application.to_dict())
+                st.session_state['current_job_index'] += 1
+                st.success("Application submitted!")
+                st.rerun()
+            else:
+                st.session_state['show_modal'] = True
+            
+
+    if st.session_state['show_modal']:
+        st.subheader("This job requires additional information")
+        
+        user_inputs = []
+
+        for i, question in enumerate(current_job['questions']):
+            response = st.text_input(question, key=f"user_input_{i}")
+            user_inputs.append(response)
+
+        # st.write("Your Responses:", user_inputs)
+
+        col3, _, col4 = st.columns([2, 10, 2])
+
+        with col3:
+            if st.button("❌ Cancel"):
+                st.session_state['show_modal'] = False  # Close modal without changing job
+                st.rerun()
+            
+        with col4:
+            if st.button("✅ Submit"):
+                st.session_state['user_response'] = user_inputs  # Store response
+                st.session_state['show_modal'] = False  # Close modal
+                application = Application(current_job['id'], st.session_state['user']['id'], user_inputs)
+                applications_collection.insert_one(application.to_dict())
+                st.session_state['current_job_index'] += 1
+                st.success("Application submitted!")
+                st.rerun()
 
 def profile_setup_page():
     st.title("Welcome to TalentSwipe! Complete Your Profile 🧑‍💻")
@@ -298,6 +357,8 @@ def recruiter_applications():
     pass
 
 def main():
+    if 'show_modal' not in st.session_state:
+        st.session_state['show_modal'] = False
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     
@@ -315,7 +376,6 @@ def main():
                     job_page()
             else:  # recruiter
                 tab1, tab2 = st.tabs(["Add a New Job Posting 📄", "Review Applications 🔍"])
-                
                 with tab1:
                     recruiter_job_post()
                 
